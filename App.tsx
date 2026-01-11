@@ -75,12 +75,18 @@ const App: React.FC = () => {
       setHistory(prev => [newRecord, ...prev].slice(0, MAX_HISTORY));
       setView('result');
     } catch (err: any) {
-      const msg = err.message || "";
+      console.error("Detailed error:", err);
+      const msg = err.message || "未知原因";
+      
       if (msg.includes("404") || msg.includes("entity was not found")) {
         setIsApiKeyMissing(true);
         setError("API Key 验证失败。请使用您自己的 API Key 关联后重试。");
+      } else if (msg.includes("SAFETY")) {
+        setError("生成被安全系统拦截：内容可能涉及敏感词汇，请尝试修改产品描述后再试。");
+      } else if (msg.includes("quota") || msg.includes("429")) {
+        setError("API 配额已用尽，请稍后再试。");
       } else {
-        setError("生成失败：" + msg);
+        setError(`生成失败：${msg}。建议检查网络连接或更换 API Key。`);
       }
     } finally {
       setLoading(false);
@@ -135,7 +141,7 @@ const App: React.FC = () => {
             <i className="fas fa-circle-exclamation text-xl mt-1"></i>
             <div>
               <p className="font-black">生成异常</p>
-              <p className="text-sm opacity-80">{error}</p>
+              <p className="text-sm opacity-80 font-medium">{error}</p>
             </div>
           </div>
         )}

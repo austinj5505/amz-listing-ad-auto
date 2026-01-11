@@ -10,21 +10,20 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
     你是一位顶级的亚马逊美国站运营专家。你必须为 ${input.category} 类目的新品生成全套 Listing 文案、视觉方案和广告策略。
     
     重点任务：
-    1. 标题生成：强制生成 1 个主标题 (Main Title) 和 3 个备选副标题 (Alternative Titles)。
+    1. 标题生成：生成 1 个主标题 (Main Title) 和 3 个备选副标题 (Alternative Titles)。
     2. 五点描述：生成 5 个高转化 Bullet Points。
-    3. 产品长描述 (Description)：
-       - 必须采用 HTML 源代码格式（使用 <b>, <strong>, <p>, <br>, <ul>, <li> 等标签）。
-       - 每个段落必须包含【主标题】和【副标题】，然后是详细内容。
-       - 需要加粗强调的内容请直接在代码中使用 <b> 或 <strong>。
-    4. 附图策划逻辑：
-       - Slide 1: 核心功能展示 (Features Focus)
-       - Slide 2: 真实场景演示 (Lifestyle Scenario)
-       - Slide 3: 材质细节/特写 (Material & Detail)
-       - Slide 4: 尺码建议/版型 (Sizing & Fit Guide)
-       - Slide 5: 使用对比/痛点解决 (Comparison)
-       - Slide 6: 品牌承诺/包装 (Brand Value)
-    5. AI 指令工程：为 Nano Banana (Gemini 2.5 Flash Image) 生成摄影级英文提示词 (generationPrompt)。
-    6. 语言：解释说明用中文，亚马逊 Listing 核心文案（Title, Bullets, Description）和 AI 指令必须用专业英文。
+    3. 产品描述：采用 HTML 源代码格式，包含【主标题】和【副标题】结构，加粗关键词。
+    4. 视觉资产策划 (Visual Assets)：
+       - 提供 1 张主图策略。
+       - 提供 6 张附图的视觉构思及 AI 生成提示词。
+       - 提供 A+ 页面布局建议 (aPlusContent)。
+       - 提供 15-30 秒短视频脚本 (productVideo)，包含脚本大纲 (scriptOutline) 和关键分镜 (keyScenes)。
+    5. 广告执行计划 (PPC Roadmap)：
+       - 必须生成 4 个阶段的详细路线图（准备期、冷启动期、爆发期、稳定期）。
+       - 每个阶段必须包含：时间范围(dayRange)、阶段名称(phaseName)、核心目标(objective)、日预算(dailyBudget)、投放重心(targetingFocus)、出价策略(biddingStrategy)、文案指令(contentInstruction)及战略逻辑(strategicLogic)。
+    
+    语言要求：Listing 核心内容 (Title, Bullets, Description) 和 AI Prompt 必须用英文；其他解释、逻辑分析、广告建议使用中文。
+    注意：泳衣/运动类目内容需符合亚马逊健康向上的审美，避免任何违规词汇。
   `;
 
   const responseSchema = {
@@ -34,9 +33,9 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
         type: Type.OBJECT,
         properties: {
           mainTitle: { type: Type.STRING },
-          altTitles: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3 alternative titles" },
+          altTitles: { type: Type.ARRAY, items: { type: Type.STRING } },
           bulletPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
-          description: { type: Type.STRING, description: "Professional Amazon product description in HTML format with main/sub headings and bold tags" },
+          description: { type: Type.STRING },
           searchTerms: { type: Type.ARRAY, items: { type: Type.STRING } },
           visualAssets: {
             type: Type.OBJECT,
@@ -44,10 +43,8 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
               mainImage: {
                 type: Type.OBJECT,
                 properties: {
-                  composition: { type: Type.STRING },
-                  lightingAndTone: { type: Type.STRING },
-                  exampleDescription: { type: Type.STRING },
                   rationale: { type: Type.STRING },
+                  exampleDescription: { type: Type.STRING },
                   generationPrompt: { type: Type.STRING }
                 }
               },
@@ -58,9 +55,7 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
                   properties: {
                     title: { type: Type.STRING },
                     keySellingPoint: { type: Type.STRING },
-                    usageScenario: { type: Type.STRING },
                     visualExample: { type: Type.STRING },
-                    rationale: { type: Type.STRING },
                     generationPrompt: { type: Type.STRING }
                   }
                 }
@@ -86,19 +81,11 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
                 type: Type.OBJECT,
                 properties: {
                   tone: { type: Type.STRING },
-                  usageScenario: { type: Type.STRING },
                   scriptOutline: { type: Type.STRING },
                   keyScenes: { type: Type.ARRAY, items: { type: Type.STRING } },
                   generationPrompt: { type: Type.STRING }
                 }
               }
-            }
-          },
-          rationales: {
-            type: Type.OBJECT,
-            properties: {
-              titleLogic: { type: Type.STRING },
-              bulletLogic: { type: Type.STRING }
             }
           }
         },
@@ -117,29 +104,42 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
                 objective: { type: Type.STRING },
                 dailyBudget: { type: Type.NUMBER },
                 targetingFocus: { type: Type.STRING },
-                placementStrategy: { type: Type.STRING },
                 biddingStrategy: { type: Type.STRING },
                 contentInstruction: { type: Type.STRING },
                 strategicLogic: { type: Type.STRING }
-              }
+              },
+              required: ["dayRange", "phaseName", "objective", "dailyBudget", "targetingFocus", "biddingStrategy", "contentInstruction", "strategicLogic"]
             }
           }
-        }
+        },
+        required: ["detailedRoadmap"]
       }
     },
     required: ["listing", "ads"]
   };
 
-  const parts: any[] = [];
-  if (input.imageFront) parts.push({ inlineData: { mimeType: "image/jpeg", data: input.imageFront.split(',')[1] } });
-  
-  parts.push({ text: `
-    请为以下产品生成全套资产。
-    要求：1个主标题+3个副标题；HTML格式Description（包含主副标题及加粗）；6张附图方案；详细广告计划。
-    
-    产品详情：
-    名称: ${input.name} | 类目: ${input.category} | 材质: ${input.material} | 风格: ${input.style} | 卖点: ${input.features}
-  `});
+  const parts: any[] = [
+    { text: `
+      请根据以下信息生成产品资产，包含全套 Listing 文案、6张附图方案、视频脚本和 A+ 页面建议，以及完整的 4 个阶段广告执行计划。
+      
+      产品名: ${input.name}
+      类目: ${input.category}
+      材质: ${input.material}
+      风格: ${input.style}
+      卖点: ${input.features}
+      
+      特别注意：视觉资产中的 'productVideo' 必须包含详细的脚本大纲和分镜。
+    ` }
+  ];
+
+  if (input.imageFront) {
+    parts.unshift({ 
+      inlineData: { 
+        mimeType: "image/jpeg", 
+        data: input.imageFront.split(',')[1] 
+      } 
+    });
+  }
 
   try {
     const response = await ai.models.generateContent({
@@ -149,15 +149,22 @@ export async function generateAmazonContent(input: ProductInput): Promise<Genera
         systemInstruction,
         responseMimeType: "application/json",
         responseSchema,
-        tools: [{ googleSearch: {} }]
+        maxOutputTokens: 8192,
+        temperature: 0.8,
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+        ]
       }
     });
 
-    let text = response.text || "{}";
-    text = text.replace(/^```json/, "").replace(/```$/, "").trim();
+    const text = response.text;
+    if (!text) throw new Error("Empty response from AI");
     return JSON.parse(text);
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini Generation Error:", error);
     throw error;
   }
 }

@@ -12,7 +12,6 @@ interface ResultViewProps {
 
 export const ResultView: React.FC<ResultViewProps> = ({ result, input, onReset, onEdit }) => {
   const [activeTab, setActiveTab] = useState<'listing' | 'visual' | 'ads'>('listing');
-  const [showInputSummary, setShowInputSummary] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
   const visualRef = useRef<HTMLDivElement>(null);
@@ -27,12 +26,12 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, input, onReset, 
     if (!ref.current) return;
     setIsCapturing(true);
     try {
-      // 延迟一下确保 DOM 渲染稳定
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 200));
       const canvas = await html2canvas(ref.current, {
         useCORS: true,
-        backgroundColor: '#f8fafc', // match slate-50
-        scale: 2, // 高清
+        backgroundColor: '#f8fafc',
+        scale: 2,
+        logging: false,
       });
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement('a');
@@ -53,76 +52,149 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, input, onReset, 
     if (!visual) return <div className="p-20 text-center">无法加载视觉资产数据</div>;
 
     return (
-      <div className="space-y-12" ref={visualRef}>
-        <div className="flex justify-between items-center mb-4">
-           <h2 className="text-2xl font-black text-slate-800">视觉资产策划报告</h2>
+      <div className="space-y-12 pb-12" ref={visualRef}>
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50 py-4 z-10 border-b border-slate-200">
+           <h2 className="text-2xl font-black text-slate-800">视觉资产全套策划报告</h2>
            <button 
              disabled={isCapturing}
-             onClick={() => captureScreenshot(visualRef, 'Visual_Assets')}
+             onClick={() => captureScreenshot(visualRef, 'Visual_Assets_Report')}
              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-lg flex items-center gap-2"
            >
              <i className={`fas ${isCapturing ? 'fa-spinner fa-spin' : 'fa-camera'}`}></i>
-             {isCapturing ? '正在生成截图...' : '一键截图所有内容'}
+             {isCapturing ? '正在生成长图...' : '一键截图视觉资产全内容'}
            </button>
         </div>
 
         {/* 主图策略 */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                <i className="fas fa-camera text-xl"></i>
-              </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight">主图 (Main Image)</h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">SEO & CTR Optimization</p>
-              </div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <i className="fas fa-camera text-xl"></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">主图策略 (Main Image)</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase">White Background Optimization</p>
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">设计逻辑</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">策划核心</p>
                 <p className="text-sm text-slate-700 font-medium">{visual.mainImage.rationale}</p>
               </div>
               <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                <p className="text-[10px] font-black text-blue-600 uppercase mb-1">构图与光影</p>
+                <p className="text-[10px] font-black text-blue-600 uppercase mb-1">场景描述</p>
                 <p className="text-sm text-slate-800 leading-relaxed italic">{visual.mainImage.exampleDescription}</p>
               </div>
             </div>
-            <div className="bg-slate-900 rounded-2xl p-6 relative group overflow-hidden">
-               <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Nano Banana AI Prompt</span>
-                  <button 
-                    onClick={() => copyToClipboard(visual.mainImage.generationPrompt, "AI指令")}
-                    className="text-[10px] font-black bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-500 transition-all flex items-center gap-2"
-                  >
-                    <i className="fas fa-copy"></i> 复制指令
-                  </button>
-               </div>
-               <p className="text-xs text-slate-400 font-mono leading-relaxed">
-                 {visual.mainImage.generationPrompt}
-               </p>
+            <div className="bg-slate-900 rounded-2xl p-6 relative">
+               <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-4">AI Image Prompt</span>
+               <p className="text-xs text-slate-300 font-mono leading-relaxed">{visual.mainImage.generationPrompt}</p>
+               <button 
+                 onClick={() => copyToClipboard(visual.mainImage.generationPrompt, "主图AI指令")}
+                 className="mt-4 text-[10px] font-black text-white bg-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-500 transition-all"
+               >
+                 复制指令
+               </button>
             </div>
           </div>
         </div>
 
         {/* 附图建议 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visual.secondaryImages.map((img, i) => (
-            <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col group">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">{i+1}</span>
-                <span className="text-[10px] font-black text-indigo-600 uppercase">{img.title}</span>
+        <div className="space-y-6">
+          <h3 className="text-lg font-black text-slate-800 px-2">产品附图方案 (Secondary Images)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visual.secondaryImages.map((img, i) => (
+              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col group">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">{i+1}</span>
+                  <span className="text-[10px] font-black text-indigo-600 uppercase">{img.title}</span>
+                </div>
+                <p className="text-xs font-black text-slate-800 mb-2">{img.keySellingPoint}</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed mb-6 flex-grow">{img.visualExample}</p>
+                <div className="mt-auto bg-slate-900 p-4 rounded-2xl">
+                   <button onClick={() => copyToClipboard(img.generationPrompt, `附图${i+1}指令`)} className="text-[9px] font-black text-indigo-400 uppercase mb-2 block hover:text-white transition-colors">COPY PROMPT</button>
+                   <p className="text-[9px] text-slate-500 font-mono line-clamp-2">{img.generationPrompt}</p>
+                </div>
               </div>
-              <p className="text-xs font-black text-slate-800 mb-2">{img.keySellingPoint}</p>
-              <p className="text-[11px] text-slate-500 leading-relaxed mb-6 flex-grow">{img.visualExample}</p>
-              <div className="mt-auto bg-slate-900 p-4 rounded-2xl">
-                 <button onClick={() => copyToClipboard(img.generationPrompt, `附图${i+1}`)} className="text-[9px] font-black text-indigo-400 uppercase mb-2 block hover:text-white transition-colors">COPY PROMPT</button>
-                 <p className="text-[9px] text-slate-500 font-mono line-clamp-2">{img.generationPrompt}</p>
+            ))}
+          </div>
+        </div>
+
+        {/* 视频脚本部分 */}
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <i className="fas fa-video text-xl"></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">视频脚本策划 (Product Video Script)</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase">15-30s Short-form Content</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100">
+                <h4 className="text-[10px] font-black text-rose-600 uppercase mb-3 tracking-widest">视频基调 (Tone)</h4>
+                <p className="text-sm font-bold text-slate-800">{visual.productVideo?.tone || "活力、高质感、动感"}</p>
+              </div>
+              <div className="bg-slate-900 p-6 rounded-2xl">
+                <h4 className="text-[10px] font-black text-rose-400 uppercase mb-3 tracking-widest">脚本大纲 (Outline)</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">{visual.productVideo?.scriptOutline}</p>
+                <button 
+                  onClick={() => copyToClipboard(visual.productVideo?.scriptOutline || "", "视频脚本")}
+                  className="mt-4 text-[10px] font-black text-white bg-rose-600 px-3 py-1.5 rounded-lg hover:bg-rose-500 transition-all"
+                >
+                  复制脚本大纲
+                </button>
               </div>
             </div>
-          ))}
+            
+            <div className="lg:col-span-2">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 h-full">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest">关键分镜 (Key Scenes)</h4>
+                <div className="space-y-4">
+                  {(visual.productVideo?.keyScenes || []).map((scene, idx) => (
+                    <div key={idx} className="flex gap-4 items-start bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                      <span className="w-6 h-6 rounded-full bg-slate-800 text-white text-[10px] font-black flex items-center justify-center shrink-0">SCENE {idx+1}</span>
+                      <p className="text-xs text-slate-700 leading-relaxed font-medium">{scene}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* A+ 页面建议 */}
+        <div className="bg-slate-100 p-8 rounded-3xl border border-slate-200">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <i className="fas fa-layer-group text-xl"></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">A+ 页面模块策划 (EBC/A+ Strategy)</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase">Visual Storytelling Layout</p>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+             <div className="bg-white p-6 rounded-2xl border border-slate-200">
+               <h4 className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">布局逻辑 (Strategy)</h4>
+               <p className="text-sm font-bold text-slate-800">{visual.aPlusContent?.layoutStrategy}</p>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+               {(visual.aPlusContent?.modules || []).map((mod, idx) => (
+                 <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                   <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Module {idx+1}: {mod.type}</span>
+                   <p className="text-xs font-bold text-slate-800 mb-2">{mod.designGoal}</p>
+                   <p className="text-[10px] text-slate-500 leading-relaxed">{mod.content}</p>
+                 </div>
+               ))}
+             </div>
+          </div>
         </div>
       </div>
     );
@@ -141,7 +213,7 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, input, onReset, 
               onClick={() => setActiveTab(tab as any)}
               className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600'}`}
             >
-              {tab === 'listing' ? 'Listing 文案' : tab === 'visual' ? '视觉资产 (AI 指令)' : '广告执行计划'}
+              {tab === 'listing' ? 'Listing 文案' : tab === 'visual' ? '视觉资产 (视频/附图)' : '广告执行计划'}
             </button>
           ))}
         </div>
@@ -247,13 +319,13 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, input, onReset, 
       {activeTab === 'ads' && (
         <div className="space-y-12" ref={adsRef}>
           <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-200">
-            <div className="flex justify-between items-center mb-12">
+            <div className="flex justify-between items-center mb-12 sticky top-0 bg-white py-4 z-10 border-b border-slate-100">
               <h3 className="text-2xl font-black text-slate-800 flex items-center gap-4">
                 <i className="fas fa-rocket text-indigo-500"></i> PPC Launch Roadmap
               </h3>
               <button 
                 disabled={isCapturing}
-                onClick={() => captureScreenshot(adsRef, 'Ad_Plan')}
+                onClick={() => captureScreenshot(adsRef, 'PPC_Ad_Plan')}
                 className="bg-slate-800 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-black transition-all shadow-lg flex items-center gap-2"
               >
                 <i className={`fas ${isCapturing ? 'fa-spinner fa-spin' : 'fa-camera'}`}></i>
