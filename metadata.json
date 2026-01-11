@@ -1,0 +1,7 @@
+{
+  "name": "Copy of AmzGenius AI - Clothing Listing & Ads Generator",
+  "description": "An AI-powered assistant for Amazon US sellers specializing in swimwear and sportswear, generating SEO-optimized listings and high-performance PPC advertising strategies.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
